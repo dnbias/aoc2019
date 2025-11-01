@@ -26,17 +26,19 @@ func Execute(memory []int) []int {
 			p2 := result[i+2]
 			p3 := result[i+3]
 
-			debugLog.Printf("Adding %d and %d, storing at position %d\n", result[p1], result[p2], p3)
 			result[p3] = result[p1] + result[p2]
+
+			debugLog.Printf("%d + %d = %d -> %d\n", result[p1], result[p2], result[p3], p3)
 		case Multiply:
 			p1 := result[i+1]
 			p2 := result[i+2]
 			p3 := result[i+3]
 
-			debugLog.Printf("Multiplying %d and %d, storing at position %d\n", result[p1], result[p2], p3)
 			result[p3] = result[p1] * result[p2]
+
+			debugLog.Printf("%d * %d = %d -> %d\n", result[p1], result[p2], result[p3], p3)
 		case Halt:
-			debugLog.Println("Halting execution")
+			debugLog.Println("HALT received, stopping execution")
 
 			return result
 		default:
@@ -48,6 +50,7 @@ func Execute(memory []int) []int {
 }
 
 func Restore1202ProgramAlarm(memory []int) []int {
+	debugLog.Println("Restoring 1202 program alarm state")
 	memory[1] = 12
 	memory[2] = 2
 
@@ -55,6 +58,8 @@ func Restore1202ProgramAlarm(memory []int) []int {
 }
 
 func FindNounAndVerbForOutput(initialMemory []int, targetOutput int) (int, int) {
+	debugLog.Printf("Finding noun and verb for target output %d\n", targetOutput)
+
 	memory := make([]int, len(initialMemory))
 
 	for noun := 0; noun <= 99; noun++ {
@@ -65,6 +70,7 @@ func FindNounAndVerbForOutput(initialMemory []int, targetOutput int) (int, int) 
 			result := Execute(initialMemory)[0]
 
 			if result == targetOutput {
+				debugLog.Printf("Found noun %d and verb %d for target output %d\n", noun, verb, targetOutput)
 				return noun, verb
 			}
 		}
