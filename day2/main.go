@@ -12,22 +12,9 @@ var (
 	verbose bool
 )
 
-func main() {
-	flag.BoolVar(&verbose, "v", false, "enable verbose logging")
-	flag.Parse()
+var debugLog *log.Logger
 
-	var debugLog *log.Logger
-	if verbose {
-		debugLog = log.New(os.Stdout, "[DEBUG] ", log.LstdFlags)
-	} else {
-		debugLog = log.New(io.Discard, "", 0)
-	}
-
-	intcode.Init(debugLog)
-
-	debugLog.Println("This will only show if -v is set")
-
-	memory := intcode.ReadMemoryFromFile("input")
+func execute(memory []int) int {
 	memory = intcode.Restore1202ProgramAlarm(memory)
 
 	debugLog.Println("Initial memory:", memory)
@@ -36,5 +23,31 @@ func main() {
 
 	debugLog.Println("Final memory:", memory)
 
-	log.Default().Printf("Value at position 0: %d\n", memory[0])
+	return memory[0]
+}
+
+func findNounAndVerb(initialMemory []int, targetOutput int) (int, int) {
+	return intcode.FindNounAndVerbForOutput(initialMemory, targetOutput)
+}
+
+func main() {
+	flag.BoolVar(&verbose, "v", false, "enable verbose logging")
+	flag.Parse()
+
+	if verbose {
+		debugLog = log.New(os.Stdout, "[DEBUG] ", log.LstdFlags)
+	} else {
+		debugLog = log.New(io.Discard, "", 0)
+	}
+
+	intcode.Init(debugLog)
+
+	memory := intcode.ReadMemoryFromFile("input")
+	result := execute(memory)
+	log.Default().Printf("Value at position 0: %d\n", result)
+
+	debugLog.Println("Memory:", memory)
+	noun, verb := findNounAndVerb(memory, 19690720)
+
+	log.Default().Printf("Noun: %d, Verb: %d, 100 * noun + verb = %d\n", noun, verb, 100*noun+verb)
 }

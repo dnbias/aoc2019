@@ -54,6 +54,25 @@ func Restore1202ProgramAlarm(memory []int) []int {
 	return memory
 }
 
+func FindNounAndVerbForOutput(initialMemory []int, targetOutput int) (int, int) {
+	memory := make([]int, len(initialMemory))
+
+	for noun := 0; noun <= 99; noun++ {
+		for verb := 0; verb <= 99; verb++ {
+			copy(memory, initialMemory)
+			initialMemory[1] = noun
+			initialMemory[2] = verb
+			result := Execute(initialMemory)[0]
+
+			if result == targetOutput {
+				return noun, verb
+			}
+		}
+	}
+
+	return -1, -1
+}
+
 func ReadMemoryFromFile(filename string) []int {
 	memory := []int{}
 
