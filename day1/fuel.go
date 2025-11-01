@@ -8,9 +8,36 @@ import (
 	"strconv"
 )
 
-func getFuel(mass int) int {
-	return (mass / 3) - 2
+func recursiveFuel(module_mass int) int {
+	total_fuel := 0
+	current_mass := module_mass
 
+	for {
+		fuel_mass := getFuel(current_mass)
+
+		if fuel_mass == 0 {
+			break
+		}
+
+		total_fuel += fuel_mass
+		current_mass = fuel_mass
+	}
+
+	return total_fuel
+}
+
+func getFuel(mass int) int {
+	if mass <= 0 {
+		return 0
+	}
+
+	fuel_mass := (mass / 3) - 2
+
+	if fuel_mass > 0 {
+		return fuel_mass
+	} else {
+		return 0
+	}
 }
 
 func main() {
@@ -26,11 +53,11 @@ func main() {
 	result := 0
 	for filescanner.Scan() {
 		line := filescanner.Text()
-		i, err := strconv.Atoi(line)
+		module_mass, err := strconv.Atoi(line)
 		if err != nil {
 			log.Fatal(err)
 		}
-		result += getFuel(i)
+		result += recursiveFuel(module_mass)
 	}
 
 	fmt.Println(result)

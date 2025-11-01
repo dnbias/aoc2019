@@ -56,4 +56,14 @@ func TestGetFuel(t *testing.T) {
 	if err := resultsScanner.Err(); err != nil {
 		t.Fatalf("error scanning results file: %s", err)
 	}
+
+	if recursiveFuel(14) != 2 {
+		t.Fatalf("recursiveFuel(14) = %d; want 2", recursiveFuel(14))
+	}
+	if recursiveFuel(1969) != 966 {
+		t.Fatalf("recursiveFuel(1969) = %d; want 966", recursiveFuel(1969))
+	}
+	if recursiveFuel(100756) != 50346 {
+		t.Fatalf("recursiveFuel(100756) = %d; want 50346", recursiveFuel(100756))
+	}
 }
