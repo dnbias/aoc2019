@@ -3,41 +3,11 @@ package wires
 import (
 	"encoding/csv"
 	"log"
-	"math"
 	"os"
 	"strconv"
+
+	"aoc2019/day3/wires/geometry"
 )
-
-type Point struct {
-	x int
-	y int
-}
-
-var centralPort Point = Point{x: 0, y: 0}
-
-func FindClosestIntersection(intersections []Point) (Point, int) {
-	distance := math.MaxInt
-	closest_intersection := Point{}
-	for _, p := range intersections {
-		r := ManhattanDistance(centralPort, p)
-		if r < distance {
-			distance = r
-			closest_intersection = p
-		}
-	}
-	return closest_intersection, distance
-}
-
-func ManhattanDistance(pos1 Point, pos2 Point) int {
-	return Abs((pos1.x - pos2.x)) + Abs((pos1.y - pos2.y))
-}
-
-func Abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
-}
 
 func ReadPathsFromFile(filename string) [][]string {
 	file, err := os.Open(filename)
@@ -56,9 +26,9 @@ func ReadPathsFromFile(filename string) [][]string {
 	return records
 }
 
-func GetWirePath(moves []string) map[Point]bool {
-	path := make(map[Point]bool)
-	x, y := 0, 0
+func GetWirePath(moves []string) map[geometry.Point]bool {
+	path := make(map[geometry.Point]bool)
+	currentX, currentY := 0, 0
 
 	for _, move := range moves {
 		direction := rune(move[0])
@@ -67,29 +37,74 @@ func GetWirePath(moves []string) map[Point]bool {
 			log.Fatal(err)
 		}
 
-		for range distance {
+		for i := 0; i < distance; i++ {
 			switch direction {
 			case 'R':
-				x++
+				currentX++
 			case 'L':
-				x--
+				currentX--
 			case 'U':
-				y++
+				currentY++
 			case 'D':
-				y--
+				currentY--
 			}
-			path[Point{x: x, y: y}] = true
+			path[geometry.Point{X: currentX, Y: currentY}] = true
 		}
 	}
 
 	return path
 }
 
-func Intersections(path1 map[Point]bool, path2 map[Point]bool) []Point {
-	intersections := []Point{}
+func GetOrderedWirePath(moves []string) []geometry.Point {
+	path := []geometry.Point{}
+	currentX, currentY := 0, 0
+
+	for _, move := range moves {
+		direction := rune(move[0])
+		distance, err := strconv.Atoi(move[1:])
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		for i := 0; i < distance; i++ {
+			switch direction {
+			case 'R':
+				currentX++
+			case 'L':
+				currentX--
+			case 'U':
+				currentY++
+			case 'D':
+				currentY--
+			}
+			path = append(path, geometry.Point{X: currentX, Y: currentY})
+		}
+	}
+
+	return path
+}
+
+func Intersections(path1 map[geometry.Point]bool, path2 map[geometry.Point]bool) []geometry.Point {
+	intersections := []geometry.Point{}
 
 	for p := range path1 {
 		if _, exists := path2[p]; exists {
+			intersections = append(intersections, p)
+		}
+	}
+
+	return intersections
+}
+
+func IntersectionsFromSlices(path1 []geometry.Point, path2 []geometry.Point) []geometry.Point {
+	path2Set := make(map[geometry.Point]bool)
+	for _, p := range path2 {
+		path2Set[p] = true
+	}
+
+	intersections := []geometry.Point{}
+	for _, p := range path1 {
+		if path2Set[p] {
 			intersections = append(intersections, p)
 		}
 	}
