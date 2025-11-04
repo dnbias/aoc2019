@@ -1,6 +1,7 @@
 package wires
 
 import (
+	"aoc2019/day3/wires/geometry"
 	"strings"
 	"testing"
 )
@@ -35,7 +36,7 @@ func TestFindClosestIntersection(t *testing.T) {
 			wire2Points := GetWirePath(moves2)
 
 			intersections := Intersections(wire1Points, wire2Points)
-			_, distance := FindClosestIntersection(intersections)
+			_, distance := geometry.FindClosestIntersection(intersections)
 
 			if distance != tc.expectedDistance {
 				t.Errorf("Expected distance %d, but got %d", tc.expectedDistance, distance)

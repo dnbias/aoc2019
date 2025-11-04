@@ -20,7 +20,6 @@ type Renderer struct {
 	Offset        geometry.Point
 	CanvasWidth   int
 	CanvasHeight  int
-	ShowGrid      bool
 	ShowWire1     bool
 	ShowWire2     bool
 }
@@ -36,7 +35,6 @@ func NewRenderer(path1, path2 []geometry.Point, intersections []geometry.Point, 
 		Offset:        offset,
 		CanvasWidth:   canvasWidth,
 		CanvasHeight:  canvasHeight,
-		ShowGrid:      true,
 		ShowWire1:     true,
 		ShowWire2:     true,
 	}
@@ -148,22 +146,7 @@ func (r *Renderer) drawCentralPort(img *image.RGBA) {
 	}
 }
 
-func (r *Renderer) blendColors(c1, c2 color.Color, alpha float64) color.Color {
-	r1, g1, b1, a1 := c1.RGBA()
-	r2, g2, b2, a2 := c2.RGBA()
 
-	r_ := uint32(float64(r1)*(1-alpha) + float64(r2)*alpha)
-	g := uint32(float64(g1)*(1-alpha) + float64(g2)*alpha)
-	b := uint32(float64(b1)*(1-alpha) + float64(b2)*alpha)
-	a := uint32(float64(a1)*(1-alpha) + float64(a2)*alpha)
-
-	return color.NRGBA{
-		R: uint8(r_ >> 8),
-		G: uint8(g >> 8),
-		B: uint8(b >> 8),
-		A: uint8(a >> 8),
-	}
-}
 
 func (r *Renderer) ExportToPNG(filename string) error {
 	img := r.RenderImage()
