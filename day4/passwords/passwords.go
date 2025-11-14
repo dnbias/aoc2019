@@ -41,6 +41,7 @@ func isValid(n int) bool {
 		}
 	}
 
+	// for part 2
 	for _ , v := range digits_adjacent {
 		if v == 1 {
 			contains_same_adjacent = true
