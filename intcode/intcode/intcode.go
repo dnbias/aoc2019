@@ -16,28 +16,33 @@ func Init(logger *log.Logger) {
 	debugLog = logger
 }
 
+type CPU struct {
+	IP int
+	Code int
+	Modes []Mode
+	Parameters []int
+	JUMP bool
+}
+
+var cpu CPU
+var _memory []int
+
 func Execute(memory []int) []int {
-	_memory := make([]int, len(memory))
+	_memory = make([]int, len(memory))
 	copy(_memory, memory)
-	// debugLog.Println("Memory:", _memory)
 
 	// I guess I mean #inputs + #parameters
 	var nparams int
-	for i := 0; i < len(_memory); i += nparams+1 {
-		code := _memory[i]
-		opcode,modes := parseCode(code)
+	for cpu.IP = 0; cpu.IP < len(_memory); {
+		cpu.Code = _memory[cpu.IP]
+		opcode := parseCode(cpu.Code)
 		switch opcode {
 		case ADD:
 			nparams = 3
-			debugState(_memory, i, nparams)
-			if len(modes) < nparams {
-				for i := len(modes); i < nparams -1; i++ {
-					modes = append(modes, 0) 
-				}
-				modes = append(modes, 1) // we write here
-			}
-			debugLog.Printf("ADD, modes: %v", modes)
-			params := getParameters(_memory, i, modes, nparams)
+			padModes(nparams)
+			params := setParameters(nparams)
+			debugState()
+			debugLog.Printf("ADD")
 			debugLog.Printf("memory[%d] = %d + %d\n",
 				params[2],
 				params[0],
@@ -47,15 +52,10 @@ func Execute(memory []int) []int {
 
 		case MULT:
 			nparams = 3
-			debugState(_memory, i, nparams)
-			if len(modes) < nparams {
-				for i := len(modes); i < nparams -1; i++ {
-					modes = append(modes, 0) 
-				}
-				modes = append(modes, 1) // we write here
-			}
-			debugLog.Printf("MULT, modes: %v", modes)
-			params := getParameters(_memory, i, modes, nparams)
+			padModes(nparams)
+			params := setParameters(nparams)
+			debugState()
+			debugLog.Printf("MULT")
 			debugLog.Printf("memory[%d] = %d * %d\n",
 				params[2],
 				params[0],
@@ -65,41 +65,108 @@ func Execute(memory []int) []int {
 
 		case INPUT:
 			nparams = 1
-			debugState(_memory, i, nparams)
-			debugLog.Printf("INPUT, modes: %v", modes)
+			debugState()
+			debugLog.Printf("INPUT")
 			var input int
 			print("> ")
 			fmt.Scan(&input)
-			out_ptr := getValue(_memory, i, 1)
+			out_ptr := getValue(1)
 			debugLog.Printf("memory[%d] = %d\n", out_ptr, input)
 			_memory[out_ptr] = input
 
 		case OUT:
 			nparams = 1
-			debugState(_memory, i, nparams)
-			debugLog.Printf("OUT, modes: %v", modes)
-			params := getParameters(_memory, i, modes, nparams)
-			debugLog.Printf("OUTPUT: %d\n", params[0])
-			println(params[0])
+			params := setParameters(nparams)
+			debugState()
+			debugLog.Printf("OUT")
+			println(">>", params[0])
 			
+		case JIT:
+			nparams = 2
+			params := setParameters(nparams)
+			debugState()
+			debugLog.Printf("JIT")
+			if params[0] != 0 {
+				debugLog.Printf("JUMP %d", params[1])
+				cpu.IP = params[1]
+				cpu.JUMP = true
+			} else {
+				debugLog.Printf("NOP")
+			}
+			
+		case JIF:
+			nparams = 2
+			params := setParameters(nparams)
+			debugState()
+			debugLog.Printf("JIF")
+			if params[0] == 0 {
+				debugLog.Printf("JUMP %d", params[1])
+				cpu.IP = params[1]
+				cpu.JUMP = true
+			} else {
+				debugLog.Printf("NOP")
+			}
+			
+		case LT:
+			nparams = 3
+			padModes(nparams)
+			debugState()
+			debugLog.Printf("LT")
+			params := setParameters(nparams)
+			if params[0] < params[1] {
+				_memory[params[2]] = 1
+			} else {
+				_memory[params[2]] = 0
+			}
+
+		case EQ:
+			nparams = 3
+			padModes(nparams)
+			params := setParameters(nparams)
+			debugState()
+			debugLog.Printf("EQ")
+			if params[0] == params[1] {
+				_memory[params[2]] = 1
+			} else {
+				_memory[params[2]] = 0
+			}
+
 		case HALT:
 			debugLog.Println("HALT received, stopping execution")
 			return _memory
 
 		default:
-			log.Fatalf("unknown opcode %d at position %d", opcode, i)
+			debugState()
+			log.Fatalf("unknown opcode %d at position %d", opcode, cpu.IP)
+		}
+
+		if cpu.JUMP {
+			cpu.JUMP = false
+		} else {
+			cpu.IP += nparams+1
 		}
 	}
 
 	return _memory
 }
 
-func getStar(memory []int, index int, parameter int) int {
-	return getParameter(memory, index, parameter, Position)
+func padModes(nparams int) {
+	if len(cpu.Modes) < nparams {
+		for i := len(cpu.Modes); i < nparams -1; i++ {
+			cpu.Modes = append(cpu.Modes, 0)
+		}
+		// we need to not dereference the output
+		// so we get the value of the pointer
+		cpu.Modes = append(cpu.Modes, 1)
+	}
 }
 
-func getValue(memory []int, index int, parameter int) int {
-	return getParameter(memory, index, parameter, Immediate)
+func getStar(parameter int) int {
+	return getParameter(_memory, cpu.IP, parameter, Position)
+}
+
+func getValue(parameter int) int {
+	return getParameter(_memory, cpu.IP, parameter, Immediate)
 }
 
 func getParameter(memory []int, index int, parameter int, mode Mode) int {
@@ -116,34 +183,36 @@ func getParameter(memory []int, index int, parameter int, mode Mode) int {
 
 	return res
 }
-func getParameters(memory []int, index int, modes []Mode, n_parameters int) []int {
-	if len(modes) > n_parameters {
+
+
+func setParameters(n_parameters int) []int {
+	if len(cpu.Modes) > n_parameters {
 		debugLog.Printf("number of modes: %d, number of parameters: %d", 
-			len(modes), n_parameters)
+			len(cpu.Modes), n_parameters)
 		log.Fatal("number of modes must less or equal to parameters")
 	}
 	params := make([]int, n_parameters)
 	for i := range n_parameters {
-		if i < len(modes) {
-			switch modes[i] {
+		if i < len(cpu.Modes) {
+			switch cpu.Modes[i] {
 			case Position:
-				params[i] = memory[memory[index+i+1]]
+				params[i] = _memory[_memory[cpu.IP+i+1]]
 			case Immediate:
-				params[i] = memory[index+i+1]
+				params[i] = _memory[cpu.IP+i+1]
 			default:
-				log.Fatalf("unknown mode %d", modes[i])
+				log.Fatalf("unknown mode %d", cpu.Modes[i])
 			}
 		} else { // omitted modes are Position
-			params[i] = memory[memory[index+i+1]]
+			params[i] = _memory[_memory[cpu.IP+i+1]]
 		}
 	}
-	// debugLog.Println(params)
+	cpu.Parameters = params
 	return params
 }
 
-func parseCode(code int) (Opcode,[]Mode) {
+func parseCode(code int) Opcode {
 	length := intLength(code)
-	modes := make([]Mode,0)
+	cpu.Modes = make([]Mode,0)
 
 	// first 2 digits are opcode
 	opcode := Opcode(code%100)
@@ -152,10 +221,10 @@ func parseCode(code int) (Opcode,[]Mode) {
 	var leftmost int
 	for i := range length-2 {
 		leftmost = code/int(math.Pow10(i+2))
-		modes = append(modes, Mode((leftmost)%10))
+		cpu.Modes = append(cpu.Modes, Mode((leftmost)%10))
 	}
 	
-	return opcode, modes
+	return opcode
 }
 
 func intLength(n int) int {
@@ -209,10 +278,10 @@ func MemoryEquals(a []int, b []int) bool {
 	return true
 }
 
-func debugState(memory []int, index int, scope int) {
+func debugState() {
 	memory_slice := make([]int, 0)
-	for i := range scope+1 {
-		memory_slice = append(memory_slice, memory[index+i])
+	for i := range len(cpu.Parameters)+1 {
+		memory_slice = append(memory_slice, _memory[cpu.IP+i])
 	}
-	debugLog.Print("[",index,"]: ",memory_slice)
+	debugLog.Print("IP: ",cpu.IP,"    ",memory_slice)
 }

@@ -11,10 +11,14 @@ type Opcode int
 // Opcode 4 outputs the value of its only parameter.
 // For example, the instruction 4,50 would output the value at address 50.
 const (
-	ADD      Opcode = 1 // input i, input j, parameter: position
-	MULT 	 Opcode = 2 // input i, input j, parameter: position
-	INPUT 	 Opcode = 3 // input i, parameter: position
-	OUT	     Opcode = 4 // input -, parameter: position
+	ADD      Opcode = 1 // input i,j,p
+	MULT 	 Opcode = 2 // input i,j,p
+	INPUT 	 Opcode = 3 // input i,p
+	OUT	     Opcode = 4 // input -,p
+	JIT		 Opcode = 5 // input i,j, if i != 0, IP = j else NOP (JUMP IF TRUE)
+	JIF		 Opcode = 6 // input i,j, if i == 0, IP = j else NOP (JUMP IF FALSE)
+	LT		 Opcode = 7 // input i,j,p; if i<j mem[p]=1 else mem[p]=0
+	EQ		 Opcode = 8 // input i,j,p; if i==j mem[p]=1 else mem[p]=0
 	HALT     Opcode = 99
 )
 
