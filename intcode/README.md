@@ -56,7 +56,7 @@ The `programs/` directory contains several sample Intcode programs:
 To run the program, use the following command:
 
 ```bash
-go run main.go
+go run main.go -i "program.i"
 ```
 
 To enable verbose logging, use the `-v` flag:
