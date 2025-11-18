@@ -31,7 +31,10 @@ func findNounAndVerb(initialMemory []int, targetOutput int) (int, int) {
 }
 
 func main() {
+	var inputFilePath string
+
 	flag.BoolVar(&verbose, "v", false, "enable verbose logging")
+	flag.StringVar(&inputFilePath, "i", "input", "path to the input file")
 	flag.Parse()
 
 	if verbose {
@@ -39,10 +42,9 @@ func main() {
 	} else {
 		debugLog = log.New(io.Discard, "", 0)
 	}
+	intcode.Init(debugLog)
 
-	    intcode.Init(debugLog)
-	
-		memory, err := intcode.ReadMemoryFromFile("input")
+	memory, err := intcode.ReadMemoryFromFile(inputFilePath)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -15,38 +15,61 @@ func Init(logger *log.Logger) {
 }
 
 func Execute(memory []int) []int {
-	result := make([]int, len(memory))
-	copy(result, memory)
+	_memory := make([]int, len(memory))
+	copy(_memory, memory)
 
-	for i := 0; i < len(result); i += 4 {
-		opcode := Opcode(result[i])
+	// I guess I mean #inputs + #parameters
+	var nparams int
+	for i := 0; i < len(_memory); i += nparams+1 {
+		opcode := Opcode(_memory[i])
 		switch opcode {
 		case Add:
-			p1 := result[i+1]
-			p2 := result[i+2]
-			p3 := result[i+3]
+			nparams = 3
+			params := getParameters(_memory, i, nparams)
+			_memory[params[2]] = _memory[params[0]] + _memory[params[1]]
 
-			result[p3] = result[p1] + result[p2]
-
-			debugLog.Printf("%d + %d = %d -> %d\n", result[p1], result[p2], result[p3], p3)
+			debugLog.Printf("%d + %d = %d -> %d\n",
+				_memory[params[0]],
+				_memory[params[1]],
+				_memory[params[2]],
+				params[2])
 		case Multiply:
-			p1 := result[i+1]
-			p2 := result[i+2]
-			p3 := result[i+3]
+			nparams = 3
+			params := getParameters(_memory, i, nparams)
+			_memory[params[2]] = _memory[params[0]] * _memory[params[1]]
 
-			result[p3] = result[p1] * result[p2]
-
-			debugLog.Printf("%d * %d = %d -> %d\n", result[p1], result[p2], result[p3], p3)
+			debugLog.Printf("%d * %d = %d -> %d\n",
+				_memory[params[0]],
+				_memory[params[1]],
+				_memory[params[2]],
+				params[2])
+		case Store:
+			nparams = 2
+			params := getParameters(_memory, i, nparams)
+			_memory[params[1]] = _memory[params[0]]
+		case Outputs:
+			nparams = 1
+			params := getParameters(_memory, i, nparams)
+			println(params[0])
+			
 		case Halt:
 			debugLog.Println("HALT received, stopping execution")
 
-			return result
+			return _memory
 		default:
 			log.Fatalf("unknown opcode %d at position %d", opcode, i)
 		}
 	}
 
-	return result
+	return _memory
+}
+
+func getParameters(memory []int, index int, n_parameters int) []int {
+	params := make([]int, n_parameters)
+	for i := range n_parameters {
+		params = append(params, memory[index+i+1])
+	}
+	return params
 }
 
 func Restore1202ProgramAlarm(memory []int) []int {
