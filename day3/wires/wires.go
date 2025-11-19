@@ -55,6 +55,7 @@ func GetWirePath(moves []string) map[geometry.Point]bool {
 	return path
 }
 
+// using this for the renderer
 func GetOrderedWirePath(moves []string) []geometry.Point {
 	path := []geometry.Point{}
 	currentX, currentY := 0, 0

@@ -39,6 +39,30 @@ func FindClosestIntersection(intersections []Point) (Point, int) {
 	return closest_intersection, distance
 }
 
+// wire1 and wire2 should be ordered
+func FindLowestNumberOfStepsIntersection(wire1, wire2 []Point, intersections []Point) (Point, int) {
+	steps := math.MaxInt
+	closest_intersection := Point{}
+	for _, p := range intersections {
+		current_steps := 0
+		for i, p1 := range wire1 {
+			if p1 == p {
+				current_steps += i + 1
+			}
+		}
+		for i, p2 := range wire2 {
+			if p2 == p {
+				current_steps += i + 1
+			}
+		}
+		if current_steps < steps {
+			steps = current_steps
+			closest_intersection = p
+		}
+	}
+	return closest_intersection, steps
+}
+
 func CalculateBounds(path1, path2 map[Point]bool) Bounds {
 	bounds := Bounds{
 		MinX: 0,
